@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HZ-SelfBot</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: black;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    canvas#stars {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      display: block;
+    }
+
+    h1 {
+      background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: hue 5s linear infinite;
+      text-align: left;
+      margin: 15px 30px 5px 30px;
+    }
+
+    .developer {
+      font-size: 14px;
+      margin-left: 30px;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: hue 3s linear infinite;
+    }
+
+    @keyframes hue {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+
+    .container {
+      display: flex;
+      height: 80%;
+      margin: 30px;
+    }
+
+    .left, .right {
+      flex: 1;
+      padding: 20px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      background: #1f1f1f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background: #333;
+      transform: scale(1.02);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #444;
+      text-align: left;
+    }
+
+    .rainbow-text {
+      background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: hue 3s linear infinite;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 10px;
+      right: 15px;
+    }
+
+    .footer img {
+      width: 28px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <h1>HZ-SelfBot</h1>
+  <div class="developer">developer: catthesigma._ㅤㅤversion: 1.0</div>
+  
+
+  <div class="container">
+    <div class="left">
+      <button onclick="start()">Start Selfbot</button>
+      <button onclick="stop()">Stop All Accounts</button>
+      <button onclick="minimizeToTray()">Hide to Tray</button>
+    </div>
+
+    <div class="right">
+      <h3>Running Accounts:</h3>
+      <table id="account-table">
+        <tbody id="accounts">
+          <tr><td class="rainbow-text">None</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111370.png" alt="Discord" onclick="openDiscord()">
+  </div>
+
+  <script>
+    async function start() {
+      await pywebview.api.start_selfbot();
+      update();
+    }
+
+    async function stop() {
+      await pywebview.api.stop_selfbot();
+      update();
+    }
+
+    async function minimizeToTray() {
+      await pywebview.api.minimize_to_tray();
+    }
+
+    function openDiscord() {
+      window.open("https://discord.com/users/941929136560164945", "_blank");
+    }
+
+    async function update() {
+      const list = await pywebview.api.get_running_accounts();
+      const container = document.getElementById("accounts");
+      container.innerHTML = "";
+
+      if (list.length === 0) {
+        container.innerHTML = '<tr><td class="rainbow-text">None</td></tr>';
+        return;
+      }
+
+      for (const user of list) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.className = "rainbow-text";
+        cell.textContent = user;
+        row.appendChild(cell);
+        container.appendChild(row);
+      }
+    }
+
+    setInterval(update, 3000);
+    update();
+
+    window.onbeforeunload = function (e) {
+      e.preventDefault();
+      const confirmExit = confirm("Are you sure you want to exit the app?");
+      if (!confirmExit) return false;
+    };
+
+    // Star animation fixed and wrapped in window.onload
+    window.onload = function () {
+      const canvas = document.getElementById("stars");
+      const ctx = canvas.getContext("2d");
+
+      let w = canvas.width = window.innerWidth;
+      let h = canvas.height = window.innerHeight;
+
+      const stars = [];
+      for (let i = 0; i < 180; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.5 + 0.5,
+          dx: -Math.random() * 0.5 - 0.2,
+          dy: Math.random() * 0.5 + 0.2,
+          hue: Math.random() * 360
+        });
+      }
+
+      function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+        ctx.fillRect(0, 0, w, h);
+
+        stars.forEach(s => {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+          ctx.fillStyle = `hsl(${s.hue}, 100%, 70%)`;
+          ctx.fill();
+          s.x += s.dx;
+          s.y += s.dy;
+          s.hue += 1;
+          if (s.x < 0 || s.y > h) {
+            s.x = Math.random() * w;
+            s.y = 0;
+            s.hue = Math.random() * 360;
+          }
+        });
+
+        requestAnimationFrame(draw);
+      }
+
+      draw();
+
+      window.addEventListener("resize", () => {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      });
+    };
+  </script>
+</body>
+</html>
